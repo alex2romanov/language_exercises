@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Вход для учителя — Environment · C1{% endblock %}
+{% block content %}
+  <section class="card task" style="max-width:460px;margin:40px auto;display:grid;gap:16px">
+    <span class="eyebrow">Для учителя</span>
+    <h2>Вход</h2>
+    <p class="lead" style="margin:0">Ключ лежит в файле <code>data/admin_key.txt</code> и печатается в консоли при запуске.</p>
+    <form method="get" action="{{ url_for('admin') }}" style="display:grid;gap:12px">
+      <input class="answer-input" name="key" type="password" placeholder="Ключ" autofocus>
+      {% if error %}<div style="color:var(--bad);font-weight:700;font-size:14px">Неверный ключ</div>{% endif %}
+      <button class="btn btn-primary">Войти</button>
+    </form>
+  </section>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Ученики — Environment · C1{% endblock %}
+{% block shell_class %}wide{% endblock %}
+{% block brand_href %}{{ url_for('admin') }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">{% endblock %}
+{% macro score(v) -%}
+  {%- if v is none -%}<span class="muted">—</span>
+  {%- else -%}<span class="score {{ 's-hi' if v >= 80 else ('s-mid' if v >= 50 else 's-lo') }}">{{ v }}%</span>{%- endif -%}
+{%- endmacro %}
+{% macro copy_icon() %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>{% endmacro %}
+{% block topright %}
+  <form method="post" action="{{ url_for('admin_logout') }}"><button class="btn btn-link btn-sm">Выйти</button></form>
+{% endblock %}
+{% block content %}
+  <div class="summary">
+    <div class="stat"><div class="stat-n">{{ summary.students }}</div><div class="stat-l">учеников</div></div>
+    <div class="stat"><div class="stat-n">{{ summary.done }}</div><div class="stat-l">прошли хотя бы раз</div></div>
+    <div class="stat"><div class="stat-n">{{ summary.avg ~ '%' if summary.avg is not none else '—' }}</div><div class="stat-l">средний лучший результат</div></div>
+    <div class="stat"><div class="stat-n">{{ summary.live }}</div><div class="stat-l">проходят сейчас</div></div>
+  </div>
+
+  <div class="admin-grid">
+    <section class="card panel">
+      <div class="panel-head">
+        <div>
+          <h2>Ученики</h2>
+          <p class="sub">У каждого своя ссылка — отправьте её ученику. Всего заданий: {{ total_items }}.</p>
+        </div>
+        <div class="btn-row">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('admin') }}">Обновить</a>
+          {% if rows %}<button class="btn btn-primary btn-sm" id="copyAll">Скопировать все ссылки</button>{% endif %}
+        </div>
+      </div>
+      {% if rows %}
+      <div class="table-wrap"><table>
+        <thead><tr><th>Имя</th><th>Ссылка</th><th>Лучший</th><th>Карточки</th><th class="hide-sm">Последний</th><th class="hide-sm">Попыток</th><th class="hide-sm">Активность</th><th></th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr data-name="{{ r.name }}" data-url="{{ r.url }}">
+            <td class="name"><a href="{{ url_for('admin_student', student_id=r.id) }}">{{ r.name }}</a>
+              {% if r.live %}<div class="live">проходит · {{ r.live.done }}/{{ r.live.total }}</div>{% endif %}</td>
+            <td><div class="link-cell"><code title="{{ r.url }}">/s/{{ r.token }}</code><button class="icon-btn copy" title="Скопировать ссылку">{{ copy_icon() }}</button></div></td>
+            <td>{{ score(r.best) }}</td>
+            <td>{% if r.cards.started %}<span class="num">{{ r.cards.learned }}</span><span class="muted">/{{ r.cards.total }}</span>
+              {% if r.cards.today %}<div class="muted" style="font-size:12px">сегодня {{ r.cards.today }}</div>{% elif r.cards.streak %}<div class="muted" style="font-size:12px">серия {{ r.cards.streak }} дн</div>{% endif %}
+              {% else %}<span class="muted">—</span>{% endif %}</td>
+            <td class="hide-sm">{{ score(r.last) }}</td>
+            <td class="hide-sm num">{{ r.finished }}</td>
+            <td class="hide-sm muted">{{ r.last_seen or '—' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_delete_student', student_id=r.id) }}" onsubmit="return confirm('Удалить {{ r.name|e }} вместе с результатами?')">
+                <button class="icon-btn danger" title="Удалить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}
+        <div class="empty">Пока никого нет. Добавьте учеников справа — по одному имени на строку.</div>
+      {% endif %}
+    </section>
+
+    <aside>
+      <section class="card panel">
+        <h2>Добавить учеников</h2>
+        <p class="sub">По одному имени на строку. Ссылки создадутся сразу.</p>
+        <form method="post" action="{{ url_for('admin_add_students') }}" style="display:grid;gap:12px">
+          <textarea name="names" placeholder="Анна Смирнова&#10;Иван Петров&#10;…" required></textarea>
+          <button class="btn btn-primary">Добавить</button>
+        </form>
+      </section>
+      <section class="card panel">
+        <h2>Трудные слова</h2>
+        <p class="sub">Где класс ошибается чаще всего</p>
+        {% if hard_words %}
+        <div class="hard-list">
+          {% for h in hard_words %}
+          <div class="hard">
+            <div class="hard-top"><span><b>{{ h.word }}</b> <span class="muted">· {{ h.translation }}</span></span><span class="num">{{ h.pct }}%</span></div>
+            <div class="hard-bar"><i style="width: {{ h.pct }}%"></i></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+          <div class="empty" style="padding:16px 0">Появится, когда ученики начнут отвечать.</div>
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+{% endblock %}
+{% block scripts %}
+<script>
+  async function copyText(text, btn) {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t);
+      t.select(); document.execCommand("copy"); t.remove();
+    }
+    if (btn) { btn.classList.add("done"); setTimeout(() => btn.classList.remove("done"), 1200); }
+  }
+  document.querySelectorAll(".copy").forEach((b) => b.onclick = () => copyText(b.closest("tr").dataset.url, b));
+  const all = document.getElementById("copyAll");
+  if (all) all.onclick = () => {
+    const text = [...document.querySelectorAll("tbody tr")].map((tr) => `${tr.dataset.name} — ${tr.dataset.url}`).join("\n");
+    copyText(text);
+    const old = all.textContent; all.textContent = "Скопировано ✓"; setTimeout(() => all.textContent = old, 1500);
+  };
+</script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Environment · C1 — {{ name }}{% endblock %}
+{% block topright %}
+  <div class="who"><span class="name-text"><b>{{ name }}</b></span><span class="avatar">{{ name[:1]|upper }}</span></div>
+{% endblock %}
+{% block content %}
+  <nav class="tabs">
+    <a class="active" href="{{ url_for('student_page', token=boot.token) }}">Тест</a>
+    <a href="{{ url_for('cards_page', token=boot.token) }}">Карточки{% if boot.cards.due %} · {{ boot.cards.due }}{% endif %}</a>
+  </nav>
+  <main id="app"><div class="spinner"></div></main>
+  <p class="center-note">Ответы сохраняются автоматически — можно закрыть вкладку и продолжить позже по этой же ссылке.</p>
+  <script id="boot" type="application/json">{{ boot|tojson }}</script>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='quiz.js') }}"></script>
+{% endblock %}

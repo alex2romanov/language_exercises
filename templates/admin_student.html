@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ st.name }} — Environment · C1{% endblock %}
+{% block shell_class %}wide{% endblock %}
+{% block brand_href %}{{ url_for('admin') }}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">{% endblock %}
+{% block topright %}<a class="btn btn-ghost btn-sm" href="{{ url_for('admin') }}">← Все ученики</a>{% endblock %}
+{% block content %}
+  <section class="card panel">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Ученик</span>
+        <h1 style="font-size:40px;margin-top:8px">{{ st.name }}</h1>
+        <p class="sub" style="margin-top:8px">Ссылка: <a href="{{ url }}" target="_blank">{{ url }}</a></p>
+      </div>
+    </div>
+
+    <h2 style="font-size:22px;margin:8px 0 6px">Карточки</h2>
+    <p class="sub">Изучено {{ card_stats.learned }} из {{ card_stats.total }} · выучено надолго {{ card_stats.states.mature }} · начато {{ card_stats.started }} · сегодня повторений {{ card_stats.today }} · серия {{ card_stats.streak }} дн{% if card_stats.lastReview %} · последний раз {{ card_stats.lastReview }}{% endif %}</p>
+    {% if cards %}
+    <details class="attempt" style="margin-bottom:28px">
+      <summary><span class="when">Слова в работе ({{ cards|length }}) — самые трудные сверху</span></summary>
+      <div class="body"><div class="table-wrap"><table>
+        <thead><tr><th>Слово</th><th>Статус</th><th>Интервал</th><th>Забывал</th><th class="hide-sm">Следующий показ</th></tr></thead>
+        <tbody>
+        {% for c in cards %}
+          <tr>
+            <td class="word">{{ c.word }} <span class="muted" style="font-family:var(--sans);font-style:normal;font-size:13px;font-weight:500">· {{ c.translation }}</span></td>
+            <td>{{ {'learning': 'изучает', 'relearning': 'переучивает', 'review': 'повторяет'}[c.state] }}</td>
+            <td class="num">{{ c.ivl ~ ' дн' if c.state == 'review' else '—' }}</td>
+            <td class="num {{ 'ans-bad' if c.lapses else 'muted' }}">{{ c.lapses }}</td>
+            <td class="hide-sm muted">{{ c.due }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div></div>
+    </details>
+    {% else %}
+      <p class="muted" style="margin-bottom:28px">Ещё не начинал карточки.</p>
+    {% endif %}
+
+    <h2 style="font-size:22px;margin:0 0 14px">Попытки теста</h2>
+    {% if attempts %}
+      {% for a in attempts %}
+      <details class="attempt" {% if loop.first %}open{% endif %}>
+        <summary>
+          {% set pct = (a.score * 100 / a.total)|round|int %}
+          <span class="score {{ 's-hi' if pct >= 80 else ('s-mid' if pct >= 50 else 's-lo') }}">{{ a.score }}/{{ a.total }}</span>
+          <span class="when">{{ a.started }} · {% if a.finished %}завершена{% else %}<span class="live">в процессе · {{ a.answered }}/{{ a.total }}</span>{% endif %}</span>
+        </summary>
+        <div class="body">
+          <table>
+            <thead><tr><th>Слово</th><th>Часть</th><th>Ответ ученика</th><th class="hide-sm">Перевод</th></tr></thead>
+            <tbody>
+            {% for l in a.lines %}
+              <tr>
+                <td class="word">{{ l.word }}</td>
+                <td class="muted">{{ 'выбор' if l.type == 'mc' else 'перевод' }}</td>
+                <td>
+                  {% if l.given is none %}<span class="muted">—</span>
+                  {% elif l.correct %}<span class="ans-ok">✓ {{ l.given }}</span>
+                  {% else %}<span class="ans-bad">✗ {{ l.given or 'не знаю' }}</span>{% endif %}
+                  {% if l.hint %}<span class="muted"> · с подсказкой</span>{% endif %}
+                </td>
+                <td class="hide-sm muted">{{ l.translation }}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      {% endfor %}
+    {% else %}
+      <div class="empty">Ученик ещё не начинал тренировку.</div>
+    {% endif %}
+  </section>
+{% endblock %}

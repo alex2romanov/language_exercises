@@ -34,8 +34,9 @@ def _stored_secret(name):
 
 
 app = Flask(__name__)
-# За nginx: брать схему (https) и хост из заголовков прокси — от них строятся ссылки ученикам
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+# За nginx: схема (https), хост и префикс пути (/english) берутся из заголовков прокси — от них строятся ссылки
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+app.config["SESSION_COOKIE_NAME"] = "elena_session"  # на общем домене не пересекаемся с cookie другого сайта
 app.secret_key = os.environ.get("SECRET_KEY") or _stored_secret("secret_key.txt")
 ADMIN_KEY = os.environ.get("ADMIN_KEY") or _stored_secret("admin_key.txt")
 
@@ -188,6 +189,7 @@ def student_page(token):
         in_progress = db().execute("SELECT COUNT(*) FROM answers WHERE attempt_id = ?", (att["id"],)).fetchone()[0]
     boot = {
         "token": token,
+        "base": request.script_root,
         "name": st["name"],
         "best": round(best["best"]) if best["best"] is not None else None,
         "attempts": best["n"],
@@ -286,7 +288,7 @@ def api_finish(token):
 def cards_page(token):
     st = student_or_404(token)
     srs.ensure_cards(db(), st["id"])
-    return render_template("cards.html", boot={"token": token, "name": st["name"]}, name=st["name"], token=token)
+    return render_template("cards.html", boot={"token": token, "base": request.script_root, "name": st["name"]}, name=st["name"], token=token)
 
 
 def cards_state(st, extra_new=0, last_item=None):
@@ -368,7 +370,7 @@ def admin():
         return render_template("admin_login.html", error=False)
 
     students = db().execute("SELECT * FROM students ORDER BY name COLLATE NOCASE").fetchall()
-    rows = [{**dict(s), **student_stats(s["id"]), "url": request.host_url + "s/" + s["token"]} for s in students]
+    rows = [{**dict(s), **student_stats(s["id"]), "url": url_for("student_page", token=s["token"], _external=True)} for s in students]
     hard = db().execute(
         "SELECT item_id, COUNT(*) AS n, SUM(correct) AS ok FROM answers GROUP BY item_id "
         "HAVING n >= 1 ORDER BY ok * 1.0 / n ASC, n DESC LIMIT 8"
@@ -432,7 +434,7 @@ def admin_student(student_id):
             "lines": lines,
         })
     return render_template("admin_student.html", st=st, attempts=attempts,
-                           url=request.host_url + "s/" + st["token"],
+                           url=url_for("student_page", token=st["token"], _external=True),
                            card_stats=srs.stats(db(), student_id), cards=srs.card_table(db(), student_id))
 
 

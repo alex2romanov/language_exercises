@@ -1,6 +1,6 @@
 (() => {
   const boot = JSON.parse(document.getElementById("boot").textContent);
-  const API = `/api/s/${boot.token}`;
+  const API = `${boot.base}/api/s/${boot.token}`;
   const app = document.getElementById("app");
 
   const ICON = {
@@ -55,7 +55,7 @@
             <div class="part-text">Догадайтесь по контексту, как перевести выделенное слово, и впишите перевод.</div>
           </div>
         </div>
-        <a class="cards-cta" href="/s/${boot.token}/cards">
+        <a class="cards-cta" href="${boot.base}/s/${boot.token}/cards">
           <span class="cards-cta-icon">${ICON.cards}</span>
           <span><b>Карточки для повторения</b><br><span>${boot.cards.due ? `Сегодня ${boot.cards.due} ${plural(boot.cards.due, "карточка", "карточки", "карточек")}` : "На сегодня всё повторено"} · изучено ${boot.cards.learned} из ${boot.cards.total}</span></span>
           ${ICON.arrow}
@@ -327,7 +327,7 @@
             : `<div class="perfect">Ни одной ошибки — все ${r.total} слов ваши!</div>`}
         </div>
         <div class="btn-row">
-          ${r.mistakes.length ? `<a class="btn btn-primary" href="/s/${boot.token}/cards">${ICON.cards} Учить ошибки в карточках</a>` : ""}
+          ${r.mistakes.length ? `<a class="btn btn-primary" href="${boot.base}/s/${boot.token}/cards">${ICON.cards} Учить ошибки в карточках</a>` : ""}
           <button class="btn ${r.mistakes.length ? "btn-ghost" : "btn-primary"}" id="again">${ICON.redo} Пройти ещё раз</button>
         </div>
       </section>`;

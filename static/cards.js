@@ -1,6 +1,6 @@
 (() => {
   const boot = JSON.parse(document.getElementById("boot").textContent);
-  const API = `/api/s/${boot.token}/cards`;
+  const API = `${boot.base}/api/s/${boot.token}/cards`;
   const app = document.getElementById("app");
   const st = { data: null, revealed: false, busy: false, extra: 0, timer: null, shownAt: 0 };
 
@@ -145,7 +145,7 @@
         <div class="done-head">${head}
           <div class="btn-row" style="margin-top:6px">
             ${data.newLeft > 0 && !waiting ? `<button class="btn btn-primary" id="more">Ещё 5 новых слов ${ICON.arrow}</button>` : ""}
-            <a class="btn btn-ghost" href="/s/${boot.token}">К тесту</a>
+            <a class="btn btn-ghost" href="${boot.base}/s/${boot.token}">К тесту</a>
           </div>
         </div>
         <div>

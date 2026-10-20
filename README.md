@@ -42,8 +42,10 @@ python app.py
 
 ## Сервер
 
-Работает на http://83.220.172.117 (код в `/root/elena_languages`, служба `elena-languages`,
-gunicorn на 127.0.0.1:8010, сайт nginx `/etc/nginx/sites-available/elena-languages`).
+Работает на https://soberimoment.ru/english/ — по пути на домене магазина, с его сертификатом.
+Код в `/root/elena_languages`, служба `elena-languages` (gunicorn на 127.0.0.1:8010).
+nginx: блок `location /english/` в `/etc/nginx/sites-available/puzzle` (передаёт `X-Forwarded-Prefix`),
+а сайт `elena-languages` перенаправляет старые ссылки http://83.220.172.117/… на https.
 Ключ учителя на сервере: `/root/elena_languages/data/admin_key.txt`.
 
 Обновить код на сервере (из этой папки, после коммита):

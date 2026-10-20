@@ -15,6 +15,7 @@ from functools import wraps
 from pathlib import Path
 
 from flask import Flask, abort, g, jsonify, redirect, render_template, request, session, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import srs
 from exercises import ITEMS
@@ -33,6 +34,8 @@ def _stored_secret(name):
 
 
 app = Flask(__name__)
+# За nginx: брать схему (https) и хост из заголовков прокси — от них строятся ссылки ученикам
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.secret_key = os.environ.get("SECRET_KEY") or _stored_secret("secret_key.txt")
 ADMIN_KEY = os.environ.get("ADMIN_KEY") or _stored_secret("admin_key.txt")
 

@@ -39,3 +39,15 @@ python app.py
 - `exercises.py` — тексты заданий. Для перевода `accept` — основы слов, по которым засчитывается ответ.
 - `data/lexis.db` — SQLite с учениками и ответами (в git не попадает).
 - Настройки через переменные окружения: `PORT`, `HOST` (для доступа из сети — `0.0.0.0`), `ADMIN_KEY`, `SECRET_KEY`.
+
+## Сервер
+
+Работает на http://83.220.172.117 (код в `/root/elena_languages`, служба `elena-languages`,
+gunicorn на 127.0.0.1:8010, сайт nginx `/etc/nginx/sites-available/elena-languages`).
+Ключ учителя на сервере: `/root/elena_languages/data/admin_key.txt`.
+
+Обновить код на сервере (из этой папки, после коммита):
+
+```bash
+git archive HEAD | ssh root@83.220.172.117 'tar -x -C /root/elena_languages && systemctl restart elena-languages'
+```
